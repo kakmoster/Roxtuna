@@ -1,6 +1,6 @@
 # Roxtuna
 
-En webbplats för Roxtuna samhällsförening.
+En webbplats för Roxtuna samhällfällighetsförening.
 
 ## Teknik
 
