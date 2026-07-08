@@ -1,7 +1,7 @@
 <?php
 /**
  * calendar.php — Fetches and parses Google Calendar ICS feed, returns upcoming events as JSON.
- * Caches the response for 10 minutes.
+ * Cache disabled during testing for immediate updates.
  */
 
 // Prevent any PHP warnings from corrupting JSON output
@@ -12,22 +12,12 @@ ini_set('display_errors', '0');
 date_default_timezone_set('Europe/Stockholm');
 
 header('Content-Type: application/json; charset=utf-8');
+header('Cache-Control: no-cache, no-store, must-revalidate');
+header('Pragma: no-cache');
+header('Expires: 0');
 
 // The direct ICS URL provided by the user
 $ICS_URL = 'https://calendar.google.com/calendar/ical/7c9bc01ed80fcd43729d8226a340d3674c7116a6f08a9ee6ad4db648b0010967%40group.calendar.google.com/public/basic.ics';
-
-// Simple file-based cache (10 minutes)
-$cacheFile = sys_get_temp_dir() . '/samf_calendar_cache.json';
-$cacheTime = 600;
-
-// Check for cache
-if (file_exists($cacheFile) && (time() - filemtime($cacheFile)) < $cacheTime) {
-    $cached = file_get_contents($cacheFile);
-    if ($cached !== false && strlen($cached) > 2) {
-        echo $cached;
-        exit;
-    }
-}
 
 // Fetch ICS
 $icsText = fetchICS($ICS_URL);
@@ -43,11 +33,6 @@ $events = parseICS($icsText);
 $upcoming = filterUpcomingEvents($events, 62);
 
 $result = json_encode($upcoming, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
-
-// Cache the result
-if ($result !== false) {
-    @file_put_contents($cacheFile, $result);
-}
 
 echo $result;
 
@@ -142,7 +127,8 @@ function parseICS($icsText) {
                     break;
                 case 'dtstart':
                     $current['dtstart'] = $value;
-                    // Check if this is a date-only value (exact match, not substring)
+                    $current['dtstart_key'] = $fullKey;
+                    // Check if this is a date-only value
                     $lowerFullKey = strtolower($fullKey);
                     $current['dtstartIsDate'] = (
                         strpos($lowerFullKey, 'value=date;') !== false ||
@@ -153,6 +139,7 @@ function parseICS($icsText) {
                     break;
                 case 'dtend':
                     $current['dtend'] = $value;
+                    $current['dtend_key'] = $fullKey;
                     break;
                 case 'description':
                     $current['description'] = $value;
@@ -167,7 +154,7 @@ function parseICS($icsText) {
     return $events;
 }
 
-function parseICSDate($icsDate, $isDateOnly) {
+function parseICSDate($icsDate, $isDateOnly, $fullKey = '') {
     // Parse YYYYMMDD or YYYYMMDDTHHMMSS(Z) format
     if (strlen($icsDate) < 8) {
         return false;
@@ -186,9 +173,17 @@ function parseICSDate($icsDate, $isDateOnly) {
         $minute = (int) substr($icsDate, 11, 2);
 
         if (substr($icsDate, -1) === 'Z') {
-            // UTC timestamp - convert to Stockholm time
+            // UTC timestamp - add 2 hours for Swedish summer time (CEST)
             $dt = new DateTime("{$year}-{$month}-{$day} {$hour}:{$minute}:00", new DateTimeZone('UTC'));
-            $dt->setTimezone(new DateTimeZone('Europe/Stockholm'));
+            $dt->modify('+2 hours');
+            return $dt;
+        }
+
+        // Check if the original ICS key specified UTC as TZID (without Z suffix)
+        $lowerFullKey = strtolower($fullKey);
+        if (strpos($lowerFullKey, 'tzid=utc') !== false) {
+            $dt = new DateTime("{$year}-{$month}-{$day} {$hour}:{$minute}:00", new DateTimeZone('UTC'));
+            $dt->modify('+2 hours');
             return $dt;
         }
 
@@ -198,6 +193,30 @@ function parseICSDate($icsDate, $isDateOnly) {
 
     // Fallback: treat as date-only
     return new DateTime("{$year}-{$month}-{$day} 00:00:00", new DateTimeZone('Europe/Stockholm'));
+}
+
+function formatEventDateDisplay(DateTime $start, $end, $isDateOnly) {
+    $months = ['jan', 'feb', 'mar', 'apr', 'maj', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'];
+    $month = $months[(int)$start->format('n') - 1];
+    $dateStr = $start->format('j') . ' ' . $month . ' ' . $start->format('Y');
+
+    if ($isDateOnly) {
+        if ($end) {
+            $endMonth = $months[(int)$end->format('n') - 1];
+            $endStr = $end->format('j') . ' ' . $endMonth . ' ' . $end->format('Y');
+            if ($dateStr !== $endStr) return "$dateStr – $endStr";
+        }
+        return $dateStr;
+    }
+
+    $timeStr = $start->format('H:i');
+
+    if ($end) {
+        $endTimeStr = $end->format('H:i');
+        return "$dateStr | $timeStr – $endTimeStr";
+    }
+
+    return "$dateStr | $timeStr";
 }
 
 function filterUpcomingEvents($events, $daysAhead) {
@@ -212,7 +231,7 @@ function filterUpcomingEvents($events, $daysAhead) {
             continue;
         }
 
-        $start = parseICSDate($ev['dtstart'], !empty($ev['dtstartIsDate']));
+        $start = parseICSDate($ev['dtstart'], !empty($ev['dtstartIsDate']), $ev['dtstart_key'] ?? '');
         if ($start === false) {
             continue;
         }
@@ -223,7 +242,7 @@ function filterUpcomingEvents($events, $daysAhead) {
 
         $end = null;
         if (!empty($ev['dtend'])) {
-            $end = parseICSDate($ev['dtend'], !empty($ev['dtstartIsDate']));
+            $end = parseICSDate($ev['dtend'], !empty($ev['dtstartIsDate']), $ev['dtend_key'] ?? '');
         }
 
         $upcoming[] = [
@@ -232,6 +251,7 @@ function filterUpcomingEvents($events, $daysAhead) {
             'dtend' => $end ? $end->format('c') : null,
             'dtstartIsDate' => !empty($ev['dtstartIsDate']),
             'description' => $ev['description'] ?? '',
+            'dateDisplay' => formatEventDateDisplay($start, $end, !empty($ev['dtstartIsDate'])),
         ];
     }
 
