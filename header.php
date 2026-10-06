@@ -1,10 +1,17 @@
+<?php
+// Egen cache-header: WebApp-Host (Apache) skickar inte Cache-Control, vilket
+// gör att telefoner (Android Chrome) serverar gammal app.js efter en deploy.
+header('Cache-Control: no-cache, no-store, must-revalidate');
+header('Pragma: no-cache');
+header('Expires: 0');
+?>
 <!DOCTYPE html>
 <html lang="sv">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Roxtuna Samfällighetsförening</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=1.4">
 </head>
 <body>
 
@@ -23,6 +30,8 @@
         <nav class="main-nav" id="mainNav">
             <a href="index.php" class="nav-link">Start</a>
             <a href="protokoll.php" class="nav-link">Protokoll</a>
+            <a href="dokument.php" class="nav-link">Dokument</a>
+            <a href="info.php" class="nav-link">Info</a>
             <a href="kontakt.php" class="nav-link">Kontakt</a>
         </nav>
     </div>
