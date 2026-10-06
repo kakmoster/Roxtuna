@@ -46,6 +46,26 @@
                 </span>
             </a>
 
+            <a href="dokument.php" class="card">
+                <div class="card-icon">&#128193;</div>
+                <h3>Dokument</h3>
+                <p>Stadgar, besiktningar, arbetsplan och andra handlingar.</p>
+                <span class="card-arrow">
+                    Läs mer
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                </span>
+            </a>
+
+            <a href="info.php" class="card">
+                <div class="card-icon">&#8505;&#65039;</div>
+                <h3>Information</h3>
+                <p>Avgifter, gemensamma anläggningar, träffar och annat praktiskt.</p>
+                <span class="card-arrow">
+                    Läs mer
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                </span>
+            </a>
+
             <a href="kontakt.php" class="card">
                 <div class="card-icon">&#9993;</div>
                 <h3>Kontakt</h3>
