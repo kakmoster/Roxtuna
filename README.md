@@ -1,28 +1,30 @@
 # Roxtuna
 
-En webbplats för Roxtuna samhällfällighetsförening.
+Community website for Roxtuna samfällighetsförening.
 
-## Teknik
+## Tech
 
-- PHP med inkluderade header/footer-moduler
-- JavaScript (app.js) för dynamisk funktionalitet
-- CSS (style.css) med responsiv design
-- Säsongsbaserade hero-bilder (vår, sommar, höst, vinter)
+- PHP with included header/footer modules
+- JavaScript (app.js) for dynamic functionality
+- CSS (style.css) responsive design
+- Seasonal hero images (spring, summer, autumn, winter)
 
-## Struktur
+## Pages
 
-| Fil | Beskrivning |
-|-----|-------------|
-| `index.php` | Ingångssida |
-| `board.php` | Styrelse |
-| `calendar.php` | Kalender |
-| `kontakt.php` | Kontakt |
-| `protokoll.php` | Protokoll |
-| `style.css` | Stilmall |
-| `app.js` | JavaScript |
-| `header.php` | Header-modul |
-| `footer.php` | Footer-modul |
+| File | Purpose |
+|------|---------|
+| `index.php` | Landing page |
+| `board.php` | Board / steering committee |
+| `calendar.php` | Calendar |
+| `dokument.php` | Other documents (from Google Sheets) |
+| `kontakt.php` | Contact |
+| `protokoll.php` | Meeting minutes (protocols) |
+| `info.php` | Info (from Google Sheets) |
+| `integritet.php` | Privacy policy |
+| `header.php` / `footer.php` | Layout modules |
+| `style.css` / `app.js` | Styling / behavior |
 
-## Deployment
+## Deploy
 
-Deployad via Hermes Agent (Hillevi) + WebApp Deployer på Unraid.
+Versioned under `projects/roxtuna-site/v1.x` and served via the WebApp
+Deployer. `v1.4` is the current production version.
